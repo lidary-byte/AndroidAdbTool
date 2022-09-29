@@ -1,0 +1,4 @@
+package bean
+
+class MainNavBean {
+}

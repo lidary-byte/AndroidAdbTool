@@ -1,0 +1,4 @@
+package widget
+
+class MainNavItem {
+}
