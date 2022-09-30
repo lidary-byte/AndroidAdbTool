@@ -1,0 +1,4 @@
+package tool
+
+class IconFontTool {
+}

@@ -1,0 +1,4 @@
+package page
+
+class Quick {
+}

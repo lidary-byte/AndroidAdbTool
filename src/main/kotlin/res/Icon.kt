@@ -1,0 +1,4 @@
+package res
+
+class Icon {
+}
