@@ -22,7 +22,6 @@ import page.QuickPage
 import page.SettingPage
 import res.defaultBgColor
 import tool.AdbTool
-import tool.runExec
 
 
 @Composable

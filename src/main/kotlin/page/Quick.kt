@@ -26,6 +26,7 @@ import bean.DeviceInfo
 import okio.buffer
 import okio.source
 import res.randomColor
+import tool.AdbTool
 import tool.runExec
 import tool.ttfFontFamily
 import kotlin.random.Random
@@ -68,7 +69,7 @@ fun QuickPage() {
             Spacer(modifier = Modifier.height(16.dp))
             AboutSystem()
             Spacer(modifier = Modifier.height(16.dp))
-            AboutKeyBoard()
+            AboutKeyBoard(device)
             Spacer(modifier = Modifier.height(16.dp))
             ScreenInput()
             Spacer(modifier = Modifier.height(16.dp))
@@ -198,20 +199,23 @@ private fun ScreenInput() {
  * 按键相关
  */
 @Composable
-private fun AboutKeyBoard() {
+private fun AboutKeyBoard(deviceId: String) {
     BaseQuick("按键相关", color = Color(158, 176, 184)) {
         Row(modifier = Modifier.fillMaxWidth()) {
-            QuickItem(0xe68e, "Home键", modifier = Modifier.weight(1f))
-            QuickItem(0xe616, "Back键", modifier = Modifier.weight(1f))
-            QuickItem(0xe605, "Menu键", modifier = Modifier.weight(1f))
-            QuickItem(0xe615, "Power键", modifier = Modifier.weight(1f))
+            QuickItem(0xe68e, "Home键", modifier = Modifier.weight(1f).clickable { AdbTool.pressHome(deviceId) })
+            QuickItem(0xe616, "Back键", modifier = Modifier.weight(1f).clickable { AdbTool.pressBack(deviceId) })
+            QuickItem(0xe605, "Menu键", modifier = Modifier.weight(1f).clickable { AdbTool.pressMenu(deviceId) })
+            QuickItem(0xe615, "Power键", modifier = Modifier.weight(1f).clickable { AdbTool.pressPower(deviceId) })
         }
         Spacer(modifier = Modifier.height(14.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
-            QuickItem(0xe76e, "增加音量", modifier = Modifier.weight(1f))
-            QuickItem(0xe771, "降低音量", modifier = Modifier.weight(1f))
-            QuickItem(0xe612, "静音", modifier = Modifier.weight(1f))
-            QuickItem(0xe658, "切换应用", modifier = Modifier.weight(1f))
+            QuickItem(0xe76e, "增加音量", modifier = Modifier.weight(1f).clickable { AdbTool.pressVolumeUp(deviceId) })
+            QuickItem(
+                0xe771,
+                "降低音量",
+                modifier = Modifier.weight(1f).clickable { AdbTool.pressVolumeDown(deviceId) })
+            QuickItem(0xe612, "静音", modifier = Modifier.weight(1f).clickable { AdbTool.pressVolumeMute(deviceId) })
+            QuickItem(0xe658, "切换应用", modifier = Modifier.weight(1f).clickable { AdbTool.pressSwitchApp(deviceId) })
         }
         Spacer(modifier = Modifier.height(14.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
