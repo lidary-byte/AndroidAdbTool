@@ -6,16 +6,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.material.NavigationRail
-import androidx.compose.material.NavigationRailItem
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import bean.createMainNavData
 import page.Logcat
@@ -23,6 +22,7 @@ import page.QuickPage
 import page.SettingPage
 import res.defaultBgColor
 import tool.AdbTool
+import tool.runExec
 
 
 @Composable
@@ -49,7 +49,12 @@ fun App() {
 }
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication, title = "tool.AdbTool") {
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = "tool.AdbTool",
+        visible = true,
+        state = WindowState(size = DpSize(width = 1200.dp, height = 900.dp))
+    ) {
         App()
     }
 }

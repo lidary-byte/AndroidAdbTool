@@ -30,7 +30,10 @@ fun QuickPage() {
     var dialogContent by remember { mutableStateOf("") }
 
     if (dialogContent.isNotEmpty()) {
-        MessageDialog(dialogTitle, dialogContent)
+        MessageDialog(dialogTitle, dialogContent) {
+            dialogTitle = ""
+            dialogContent = ""
+        }
     }
 
     LazyColumn(
@@ -39,6 +42,8 @@ fun QuickPage() {
         // 前后加个间距
         item {
             Spacer(modifier = Modifier.height(8.dp))
+            ConnectDevices()
+            Spacer(modifier = Modifier.height(16.dp))
             CommonFunction { title, content ->
                 dialogTitle = title
                 dialogContent = content
@@ -58,6 +63,13 @@ fun QuickPage() {
         item {
             Spacer(modifier = Modifier.height(8.dp))
         }
+    }
+}
+
+@Composable
+private fun ConnectDevices() {
+    BaseQuick("连接设备", Color(155, 203, 99)) {
+
     }
 }
 
@@ -184,7 +196,7 @@ private fun CommonFunction(onClick: (title: String, content: String) -> Unit) {
 @Composable
 private fun BaseQuick(title: String, color: Color = Color.Transparent, content: @Composable ColumnScope.() -> Unit) {
     Surface(
-        modifier = Modifier.background(Color.White),
+        modifier = Modifier.background(Color.White).fillMaxWidth(),
         shape = RoundedCornerShape(6.dp),
         border = BorderStroke(0.5.dp, Color(220, 220, 220)),  // 边框
     ) {
@@ -232,15 +244,18 @@ private fun QuickItem(ttf: Int? = null, title: String? = null, modifier: Modifie
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun MessageDialog(title: String, content: String) {
+private fun MessageDialog(title: String, content: String, clickDismiss: () -> Unit) {
     AlertDialog(onDismissRequest = {
+        clickDismiss.invoke()
     }, buttons = {
-        TextButton(
-            {
-
-            },
+        Row(
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End
         ) {
-            Text("确定")
+            TextButton(
+                onClick = clickDismiss,
+            ) {
+                Text("确定")
+            }
         }
     }, title = {
         Text(title)
