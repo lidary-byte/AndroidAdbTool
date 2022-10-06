@@ -1,20 +1,30 @@
 package page
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import bean.DeviceInfo
+import okio.buffer
+import okio.source
 import res.randomColor
 import tool.runExec
 import tool.ttfFontFamily
@@ -29,6 +39,9 @@ fun QuickPage() {
     var dialogTitle by remember { mutableStateOf("") }
     var dialogContent by remember { mutableStateOf("") }
 
+    // 当前选中的设备id
+    var device by remember { mutableStateOf("") }
+
     if (dialogContent.isNotEmpty()) {
         MessageDialog(dialogTitle, dialogContent) {
             dialogTitle = ""
@@ -42,9 +55,11 @@ fun QuickPage() {
         // 前后加个间距
         item {
             Spacer(modifier = Modifier.height(8.dp))
-            ConnectDevices()
+            ConnectDevices() {
+                device = it ?: ""
+            }
             Spacer(modifier = Modifier.height(16.dp))
-            CommonFunction { title, content ->
+            CommonFunction(device) { title, content ->
                 dialogTitle = title
                 dialogContent = content
             }
@@ -67,9 +82,93 @@ fun QuickPage() {
 }
 
 @Composable
-private fun ConnectDevices() {
-    BaseQuick("连接设备", Color(155, 203, 99)) {
+private fun ConnectDevices(deviceCallback: (String?) -> Unit) {
+    // 拿到已经连接的所有设备
+    val devices = mutableStateListOf<DeviceInfo>()
 
+
+    var showDeviceItem by remember { mutableStateOf(false) }
+    val size by animateDpAsState(
+        targetValue = if (showDeviceItem) 120.dp else 0.dp
+    )
+    // 箭头旋转动画
+    val arrowAnim by animateFloatAsState(if (showDeviceItem) -180f else 0f)
+
+    var selectIndexDevice by remember { mutableStateOf(0) }
+
+    fun devicesList() {
+        val p = Runtime.getRuntime().exec("adb devices")
+        p.inputStream.source().buffer().use {
+            while (true) {
+                val line = it.readUtf8Line() ?: break
+                if (line.contains("List of devices attached") || line.isBlank()) {
+                    continue
+                }
+                if (line.contains("device")) {
+                    val deviceLine = line.split("\t")
+                    if (deviceLine.isEmpty()) {
+                        continue
+                    }
+                    val device = deviceLine[0]
+                    val deviceName = "adb -s $device shell getprop ro.product.brand".runExec()
+                    val deviceModel = "adb -s $device shell getprop ro.product.model".runExec()
+                    devices.add(DeviceInfo(deviceName, deviceModel, device))
+                }
+            }
+        }
+    }
+    devicesList()
+
+    BaseQuick("连接设备", Color(155, 203, 99)) {
+        val deviceName = if (devices.isNotEmpty()) {
+            val firstDevice = devices[selectIndexDevice]
+            // 获取设备品牌
+            deviceCallback.invoke(firstDevice.device)
+            "${firstDevice.deviceName}  ${firstDevice.deviceModel}"
+        } else {
+            deviceCallback.invoke(null)
+            "连接设备"
+        }
+
+        TextButton(
+            {
+                showDeviceItem = !showDeviceItem
+            },
+            shape = RoundedCornerShape(19.dp), border = BorderStroke(1.dp, Color.Black),
+            contentPadding = PaddingValues(horizontal = 12.dp)
+        ) {
+            Text(deviceName, color = Color.Black)
+            Icon(
+                Icons.Default.ArrowDropDown,
+                contentDescription = "",
+                tint = Color.Black,
+                modifier = Modifier.graphicsLayer {
+                    rotationX = arrowAnim
+                })
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        LazyColumn(modifier = Modifier.height(size).padding(horizontal = 6.dp)) {
+            items(devices.size) {
+                val device = devices[it]
+                Row(modifier = Modifier.clickable {
+                    selectIndexDevice = it
+                    showDeviceItem = false
+                    deviceCallback.invoke(device.device)
+                }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "${device.deviceName}  ${device.deviceModel}",
+                        color = if (deviceName.contains(device.deviceName) || deviceName.contains(device.deviceModel)) Color(
+                            139,
+                            195,
+                            74
+                        ) else Color.Black, modifier = Modifier.weight(1f)
+                    )
+                    if (deviceName.contains(device.deviceName) || deviceName.contains(device.deviceModel)) {
+                        Icon(Icons.Default.Check, contentDescription = "", tint = Color(139, 195, 74))
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -180,14 +279,14 @@ private fun AboutApp() {
  * 常用功能
  */
 @Composable
-private fun CommonFunction(onClick: (title: String, content: String) -> Unit) {
+private fun CommonFunction(device: String, onClick: (title: String, content: String) -> Unit) {
     BaseQuick("常用功能", color = Color(255, 152, 0)) {
         Row(modifier = Modifier.fillMaxWidth()) {
             QuickItem(0xe693, "安装应用", modifier = Modifier.weight(1f))
             QuickItem(0xe816, "输入文本", modifier = Modifier.weight(1f))
             QuickItem(0xe931, "截图保存到电脑", modifier = Modifier.weight(1f))
             QuickItem(0xe607, "查看当前Activity", modifier = Modifier.weight(1f).clickable {
-                onClick.invoke("查看当前Activity", "adb shell dumpsys window | grep mCurrentFocus".runExec())
+                onClick.invoke("查看当前Activity", "adb -s $device shell dumpsys window | grep mCurrentFocus".runExec())
             })
         }
     }
