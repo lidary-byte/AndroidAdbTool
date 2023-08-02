@@ -11,17 +11,17 @@ import tool.runExec
 
 @Composable
 fun SettingPage(adbDefaultPath: String? = null) {
-    var adbPath by remember { mutableStateOf(adbDefaultPath ?: "") }
+    val adbPath by remember { mutableStateOf(adbDefaultPath ?: "") }
     var testAdb by remember { mutableStateOf("") }
     Column {
-        Text("设置Adb路径", fontSize = 18.sp)
+        Text("Adb路径", fontSize = 18.sp)
         Row {
             Text(adbPath)
-            Button({
-                testAdb = "adb version".runExec()
-            }) {
-                Text("测试")
-            }
+        }
+        Button({
+            testAdb = "adb version".runExec()
+        }) {
+            Text("测试")
         }
         Text(testAdb, color = if (testAdb.contains("Version")) Color.Green else Color.Red)
     }
