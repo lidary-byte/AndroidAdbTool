@@ -109,16 +109,4 @@ object AdbTool {
             "187",
         ).runExecAndAdb()
     }
-
-    /// 切换应用
-    fun fileList(deviceId: String) {
-        arrayOf(
-            "-s",
-            deviceId,
-            "shell",
-            "ls",
-            "-FA",
-            "187",
-        ).runExecAndAdb()
-    }
 }

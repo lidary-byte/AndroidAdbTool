@@ -1,8 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -14,13 +17,11 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import bean.createMainNavData
-import page.FileManager
 import page.Logcat
 import page.QuickPage
 import page.SettingPage
 import res.defaultBgColor
 import tool.AdbTool
-import java.awt.Dimension
 
 
 @Composable
@@ -28,23 +29,19 @@ import java.awt.Dimension
 fun App() {
     val adbPath = AdbTool.adbPath()
     var selectItem by remember { mutableStateOf(0) }
-    MaterialTheme {
-        Scaffold(bottomBar = {
-            MainNav {
-                selectItem = it
-            }
-        }) {
-            // NavigationRail 宽度72.dp
-            Box(
-                modifier = Modifier.background(defaultBgColor).fillMaxHeight()
-                    .fillMaxWidth().padding(start = 72.dp)
-            ) {
-                when (selectItem) {
-                    0 -> QuickPage()
-                    1 -> FileManager()
-                    2 -> Logcat()
-                    3 -> SettingPage(adbPath)
-                }
+    Scaffold(bottomBar = {
+        MainNav {
+            selectItem = it
+        }
+    }) {
+        // NavigationRail 宽度72.dp
+        Box(
+            modifier = Modifier.background(defaultBgColor).fillMaxHeight().fillMaxWidth().padding(start = 72.dp)
+        ) {
+            when (selectItem) {
+                0 -> QuickPage()
+                2 -> Logcat()
+                3 -> SettingPage(adbPath)
             }
         }
     }
@@ -53,16 +50,10 @@ fun App() {
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
-        title = "AndroidAdbTool",
+        title = "tool.AdbTool",
         visible = true,
         state = WindowState(size = DpSize(width = 1200.dp, height = 900.dp))
     ) {
-        window.minimumSize = Dimension(600, 450)
-        window.rootPane.apply {
-            rootPane.putClientProperty("apple.awt.fullWindowContent", true)
-            rootPane.putClientProperty("apple.awt.transparentTitleBar", true)
-            rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
-        }
         App()
     }
 }
@@ -71,7 +62,7 @@ fun main() = application {
 @Composable
 private fun MainNav(onSelectItem: (Int) -> Unit) {
     var navigationIndex by remember { mutableStateOf(0) }
-    NavigationRail(elevation = 0.dp) {
+    NavigationRail {
         createMainNavData().forEachIndexed { index, mainNavBean ->
             MainNavItem(navigationIndex, index, mainNavBean.svgName, mainNavBean.labelText) {
                 navigationIndex = it

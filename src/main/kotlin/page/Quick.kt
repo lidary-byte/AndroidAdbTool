@@ -2,7 +2,9 @@ package page
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,7 +29,6 @@ import res.randomColor
 import tool.AdbTool
 import tool.runExec
 import tool.ttfFontFamily
-import widget.rememberForeverLazyListState
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -36,7 +37,6 @@ import kotlin.random.nextInt
  */
 @Composable
 fun QuickPage() {
-    println("===============状态111")
     var dialogTitle by remember { mutableStateOf("") }
     var dialogContent by remember { mutableStateOf("") }
 
@@ -51,13 +51,12 @@ fun QuickPage() {
     }
 
     LazyColumn(
-        modifier = Modifier.fillMaxHeight().padding(horizontal = 8.dp, vertical = 12.dp).fillMaxWidth()
-        , state = rememberForeverLazyListState(key = "QuickPage")
+        modifier = Modifier.fillMaxHeight().padding(horizontal = 8.dp, vertical = 12.dp).fillMaxWidth(),
     ) {
         // 前后加个间距
         item {
             Spacer(modifier = Modifier.height(8.dp))
-            ConnectDevices {
+            ConnectDevices() {
                 device = it ?: ""
             }
             Spacer(modifier = Modifier.height(16.dp))
