@@ -107,7 +107,9 @@ fun ConnectDevices(deviceCallback: (String?) -> Unit) {
     // 拿到已经连接的所有设备
     val devices = remember { mutableStateListOf<DeviceInfo>() }
 
-    LaunchedEffect(Unit) {
+    var refresh by remember { mutableStateOf(0) }
+    LaunchedEffect(refresh) {
+
         withContext(Dispatchers.IO) {
             val p = Runtime.getRuntime().exec("adb devices")
             p.inputStream.source().buffer().use {
@@ -150,7 +152,6 @@ fun ConnectDevices(deviceCallback: (String?) -> Unit) {
 
 
     Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-
         val deviceName = if (devices.isNotEmpty()) {
             val firstDevice = devices[selectIndexDevice]
             // 获取设备品牌
@@ -204,6 +205,13 @@ fun ConnectDevices(deviceCallback: (String?) -> Unit) {
             }
         }
 
+
+        Button(onClick = {
+            devices.clear()
+            refresh++
+        }, modifier = Modifier.fillMaxWidth()) {
+            Text("刷新Adb Device")
+        }
     }
 
 }

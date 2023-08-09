@@ -2,7 +2,7 @@ package res
 
 import androidx.compose.ui.graphics.Color
 
-val defaultBgColor = Color(250, 250, 250)
+val defaultBgColor = Color(240, 240, 240)
 val whiteColor = Color(255, 255, 255)
 
 

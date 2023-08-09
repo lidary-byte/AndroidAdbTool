@@ -5,7 +5,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,21 +16,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
-import bean.FileBean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import res.whiteColor
 import tool.AdbTool
+import tool.findLevel
 import tool.runExecAndAdbToBuffer
-import kotlin.math.log
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -48,9 +46,8 @@ fun Logcat(deviceId: String) {
             AdbTool.log(deviceId, filter).runExecAndAdbToBuffer().use {
                 while (true) {
                     val line = it.readUtf8Line() ?: continue
-                    println("=====================$line")
                     withContext(Dispatchers.Main) {
-                        logList.add(0,line)
+                        logList.add(0, line)
                     }
                 }
             }
@@ -59,9 +56,12 @@ fun Logcat(deviceId: String) {
 
     LazyColumn {
         stickyHeader {
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.Gray)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(whiteColor)
+                    .padding(horizontal = 20.dp)
+            ) {
                 TextButton(
                     {
                         setIsPopupVisible(!isPopupVisible)
@@ -73,7 +73,7 @@ fun Logcat(deviceId: String) {
                     shape = RoundedCornerShape(8.dp),
                     border = BorderStroke(1.dp, Color.Black)
                 ) {
-                    Text("Logcat Level", color = Color.Black)
+                    Text(filter.findLevel(), color = Color.Black)
                     Icon(
                         Icons.Default.ArrowDropDown,
                         contentDescription = "",
@@ -91,6 +91,7 @@ fun Logcat(deviceId: String) {
                 if (isPopupVisible) {
                     LevelWidget(clickCoordinates.width, clickCoordinates.height) {
                         filter = it
+                        setIsPopupVisible(false)
                     }
                 }
             }
@@ -104,15 +105,15 @@ fun Logcat(deviceId: String) {
 
 @Composable
 fun LevelWidget(x: Int, y: Int, selectLevel: (String) -> Unit) {
-    Popup(offset = IntOffset(0, y)) {
+    Popup(offset = IntOffset(10, y)) {
         Column(
             modifier = Modifier
-                .width(100.dp)
-                .shadow(0.dp, RoundedCornerShape(10.dp))
-                .background(Color.Red)
+                .width(120.dp)
+                .background(whiteColor, shape = RoundedCornerShape(10.dp))
         ) {
             arrayOf("A", "D", "E", "I", "V", "W").forEach {
                 Text(it, fontSize = 16.sp, modifier = Modifier
+                    .fillMaxWidth()
                     .clickable {
                         selectLevel.invoke("*:$it")
                     }
