@@ -1,5 +1,6 @@
 package tool
 
+import okio.BufferedSource
 import okio.buffer
 import okio.source
 
@@ -18,4 +19,11 @@ fun Array<String>.runExecAndAdb(): String {
         add(0, "adb")
     }.toTypedArray())
     return p.inputStream.source().buffer().readUtf8().trimEnd()
+}
+
+fun Array<String>.runExecAndAdbToBuffer(): BufferedSource {
+    val p = Runtime.getRuntime().exec(this.toMutableList().apply {
+        add(0, "adb")
+    }.toTypedArray())
+    return p.inputStream.source().buffer()
 }

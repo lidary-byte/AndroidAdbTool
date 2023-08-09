@@ -5,6 +5,8 @@ import okio.source
 
 object AdbTool {
 
+    var deviceId = ""
+
     /**
      * 获取windows上安装的adb路径
      */
@@ -22,7 +24,8 @@ object AdbTool {
 
     /// Home键
     fun pressHome(deviceId: String) {
-        arrayOf( "-s", deviceId, "shell", "input", "keyevent", "3"
+        arrayOf(
+            "-s", deviceId, "shell", "input", "keyevent", "3"
         ).runExecAndAdb()
     }
 
@@ -109,4 +112,20 @@ object AdbTool {
             "187",
         ).runExecAndAdb()
     }
+
+    fun fileList(deviceId: String, fold: String) = arrayOf(
+        "-s",
+        deviceId,
+        "shell",
+        "ls",
+        "-FA",
+        fold,
+    )
+
+    fun log(deviceId: String, level: String) = arrayOf(
+        "-s",
+        deviceId,
+        "logcat",
+        "*:$level"
+    )
 }
