@@ -97,21 +97,22 @@ data class QuickScreen(val device: String) : Screen {
                     item(span = {
                         GridItemSpan(4)
                     }) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp)
+                        ) {
+                            Spacer(
+                                modifier = Modifier.width(4.dp).height(16.dp).clip(RoundedCornerShape(8.dp))
+                                    .background(Color(146, 106, 255))
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(it.title)
                         }
                     }
                     items(it.child) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
                             Box(
-                                modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(
-                                    randomColor[Random.nextInt(
-                                        IntRange(
-                                            0, randomColor.size - 1
-                                        )
-                                    )]
-                                ),
+                                modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(it.iconColor),
                             ) {
                                 Text(
                                     text = "${Char(it.icon)}",
@@ -123,12 +124,13 @@ data class QuickScreen(val device: String) : Screen {
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(it.title, fontSize = 12.sp)
+                            Spacer(modifier = Modifier.height(12.dp))
                         }
                     }
                     item(span = {
                         GridItemSpan(4)
                     }) {
-                        Spacer(modifier = Modifier.height(18 .dp).background(Color(240, 240, 240)))
+                        Spacer(modifier = Modifier.height(18.dp).background(Color(240, 240, 240)))
                     }
                 }
 
