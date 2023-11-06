@@ -28,6 +28,7 @@ import okio.buffer
 import okio.source
 import res.defaultBgColor
 import tool.AdbTool
+import tool.deviceId
 import tool.runExec
 
 
@@ -60,8 +61,9 @@ fun Home() {
                     header = {
                         Spacer(modifier = Modifier.height(12.dp))
                         ConnectDevices {
-                            if (!it.isNullOrEmpty()) {
+                            if (!it.isNullOrEmpty() && it != device) {
                                 device = it
+                                deviceId = device
                             }
                         }
                     }) {
@@ -98,7 +100,6 @@ private fun TabNavigationItem(tab: Tab) {
         )
     }
 }
-
 
 
 /**

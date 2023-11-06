@@ -16,6 +16,10 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation(compose.material)
+    implementation(compose.materialIconsExtended)
+
+
     implementation("com.squareup.okio:okio:3.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.1.1")
 

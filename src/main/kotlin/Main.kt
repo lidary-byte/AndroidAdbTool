@@ -6,16 +6,18 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import screen.home.Home
+fun main() {
 
-fun main() = application {
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "tool.AdbTool",
-        visible = true,
-        state = WindowState(size = DpSize(width = 1200.dp, height = 900.dp))
-    ) {
-        MaterialTheme {
-            Home()
+    application {
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "tool.AdbTool",
+            visible = true,
+            state = WindowState(size = DpSize(width = 1200.dp, height = 900.dp))
+        ) {
+            MaterialTheme {
+                Home()
+            }
         }
     }
 }
