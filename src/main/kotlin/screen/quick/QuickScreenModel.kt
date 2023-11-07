@@ -20,22 +20,31 @@ class QuickScreenModel : ScreenModel {
         get() = _quickData.asStateFlow()
 
 
-    fun runExec(position: Int, command: MutableList<String>) {
+    private val _execResult = MutableStateFlow("")
+    val execResult
+        get() = _execResult.asStateFlow()
+
+    fun runExec(command: MutableList<String>) {
         screenModelScope.launch(Dispatchers.IO) {
-            val a = command.runExecAndAdb()
+            _execResult.value = command.runExecAndAdb()
         }
+    }
+
+    fun resetExecResult() {
+        _execResult.value = ""
     }
 
     private fun buildData() {
         screenModelScope.launch(Dispatchers.IO) {
             _quickData.value = mutableListOf(
-                QuickBean("安装应用", 0xe693),
+                QuickBean("安装应用", 0xe693, type = QuickBean.ADB_TYPE_INSTALL, command = mutableListOf("安装应用")),
                 QuickBean("输入文本", 0xe816),
                 QuickBean("截图保存电脑", 0xe931),
                 QuickBean(
                     "查看当前Activity",
                     0xe607,
-                    mutableListOf("shell", "dumpsys", "window", "|", "grep", " mCurrentFocus")
+                    type = QuickBean.ADB_TYPE_SHOW_DIALOG,
+                    command = mutableListOf("shell", "dumpsys", "window", "|", "grep", " mCurrentFocus")
                 ),
                 QuickBean("卸载应用", 0xe740),
                 QuickBean("启动应用", 0xe6af),
@@ -50,12 +59,23 @@ class QuickScreenModel : ScreenModel {
                 QuickBean("保存Apk到电脑", 0xe60e),
                 QuickBean("开始录屏", 0xe695),
                 QuickBean("结束录屏保存到电脑", 0xe71d),
-                QuickBean("查看AndroidId", 0xe881),
-                QuickBean("查看系统版本", 0xe617),
-                QuickBean("查看IP地址", 0xe632),
-                QuickBean("查看Mac地址", 0xe65d),
-                QuickBean("重启手机", 0xe6b2),
-                QuickBean("查看系统属性", 0xe61e),
+
+                QuickBean("查看系统版本", 0xe617, arrayListOf("shell","getprop","ro.build.version.release"), type = QuickBean.ADB_TYPE_SHOW_DIALOG),
+                QuickBean("查看IP地址", 0xe632, arrayListOf("shell","ifconfig"), type = QuickBean.ADB_TYPE_SHOW_DIALOG),
+                // 需要提权
+//                QuickBean(
+//                    "查看Mac地址",
+//                    0xe65d,
+//                    arrayListOf("shell", "ip", "link", "show"),
+//                    type = QuickBean.ADB_TYPE_SHOW_DIALOG
+//                ),
+                QuickBean("重启手机", 0xe6b2, arrayListOf("reboot")),
+                QuickBean(
+                    "查看系统属性",
+                    0xe61e,
+                    arrayListOf("shell", "getprop"),
+                    type = QuickBean.ADB_TYPE_SHOW_DIALOG
+                ),
                 QuickBean("Home键", 0xe68e, arrayListOf("shell", "input", "keyevent", "3")),
                 QuickBean("Back键", 0xe616, arrayListOf("shell", "input", "keyevent", "4")),
                 QuickBean(
@@ -98,13 +118,7 @@ class QuickScreenModel : ScreenModel {
                         "keyevent",
                         "187"
                     )
-                ),
-                QuickBean("遥控器", 0xe796),
-                QuickBean("向上滑动", 0xe795),
-                QuickBean("向下滑动", 0xe603),
-                QuickBean("向左滑动", 0xe60a),
-                QuickBean("向右滑动", 0xe6ca),
-                QuickBean("屏幕点击", 0xe697)
+                )
             )
         }
     }

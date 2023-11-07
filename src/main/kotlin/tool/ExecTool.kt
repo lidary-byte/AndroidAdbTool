@@ -19,6 +19,7 @@ fun Array<String>.runExec(): String {
 }
 
 fun MutableList<String>.runExecAndAdb(): String {
+    println("---------当前执行的命令:adb -s $deviceId ${this.joinToString(separator = " ")}")
     val p = Runtime.getRuntime().exec(
         arrayOf("adb", "-s", deviceId).plus(this)
     )

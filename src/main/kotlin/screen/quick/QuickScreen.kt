@@ -4,42 +4,36 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.*
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import bean.DeviceInfo
+import bean.QuickBean
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinx.coroutines.delay
 import okio.buffer
 import okio.source
-import res.randomColor
-import tool.AdbTool
 import tool.deviceId
-import tool.runExec
-import tool.ttfFontFamily
+import widget.DialogFile
+import widget.MessageDialog
 import widget.RunningIndicator
-import kotlin.random.Random
-import kotlin.random.nextInt
+import javax.swing.filechooser.FileNameExtensionFilter
 
 data class QuickScreen(val device: String) : Screen {
 
@@ -47,22 +41,40 @@ data class QuickScreen(val device: String) : Screen {
     override fun Content() {
         val quickModel = rememberScreenModel { QuickScreenModel() }
         val quickData by quickModel.quickData.collectAsState()
+        // adb命令执行结果
+        val execResult by quickModel.execResult.collectAsState()
 
+        // apk文件安装相关
+        var showFileChooseDialog by remember { mutableStateOf(false) }
+        var filePathDialog by remember { mutableStateOf("") }
 
         var dialogTitle by remember { mutableStateOf("") }
-        var dialogContent by remember { mutableStateOf("") }
 
-
-        if (dialogContent.isNotEmpty()) {
-            MessageDialog(dialogTitle, dialogContent) {
+        if (dialogTitle.isNotBlank() && execResult.isNotBlank()) {
+            MessageDialog(dialogTitle, execResult) {
                 dialogTitle = ""
-                dialogContent = ""
+                quickModel.resetExecResult()
+            }
+        }
+
+        // apk安装
+        if (showFileChooseDialog) {
+            DialogFile(title = "选择要安装的apk文件", extensions = listOf(FileNameExtensionFilter("Apk File", "apk"))) {
+                if (it.isNotEmpty()) {
+                    showFileChooseDialog = false
+                    filePathDialog = it.first().absolutePath
+                }
+            }
+        }
+
+        if (filePathDialog.isNotBlank()) {
+            InstallApkDialog(filePathDialog, commandFun = {
+                quickModel.runExec(it)
+            }) {
+                filePathDialog = ""
             }
         }
         Column {
-//            CheckPackage {
-//
-//            }
             LazyVerticalGrid(modifier = Modifier.fillMaxWidth().wrapContentHeight().padding(16.dp),
                 // 固定两列
                 columns = GridCells.Adaptive(250.dp),
@@ -74,10 +86,19 @@ data class QuickScreen(val device: String) : Screen {
                                 modifier = Modifier.fillMaxHeight().padding(12.dp)
                             ) {
                                 Text(text = item.title, fontWeight = FontWeight.Bold)
+                                Text(text = if (item.command.isEmpty()) "待实现..." else "")
                                 Button(
                                     onClick = {
-                                        quickModel.runExec(index, item.command)
-                                    }, modifier = Modifier.align(Alignment.End)
+                                        when (item.type) {
+                                            QuickBean.ADB_TYPE_INSTALL -> showFileChooseDialog = true
+                                            QuickBean.ADB_TYPE_SHOW_DIALOG -> {
+                                                dialogTitle = item.title
+                                                quickModel.runExec(item.command)
+                                            }
+
+                                            else -> quickModel.runExec(item.command)
+                                        }
+                                    }, modifier = Modifier.align(Alignment.End), enabled = item.command.isNotEmpty()
                                 ) {
                                     when (item.refresh) {
                                         true -> RunningIndicator()
@@ -96,7 +117,11 @@ data class QuickScreen(val device: String) : Screen {
 
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
-    private fun MessageDialog(title: String, content: String, clickDismiss: () -> Unit) {
+    private fun InstallApkDialog(
+        filePath: String,
+        commandFun: (commandList: MutableList<String>) -> Unit,
+        clickDismiss: () -> Unit
+    ) {
         AlertDialog(onDismissRequest = {
             clickDismiss.invoke()
         }, buttons = {
@@ -104,21 +129,31 @@ data class QuickScreen(val device: String) : Screen {
                 modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End
             ) {
                 TextButton(
-                    onClick = clickDismiss,
+                    onClick = {
+                        commandFun.invoke(mutableListOf("install", "-r", filePath))
+                        clickDismiss.invoke()
+                    },
                 ) {
-                    Text("确定")
+                    Text("覆盖安装")
+                }
+                TextButton(
+                    onClick = {
+                        commandFun.invoke(mutableListOf("install", filePath))
+                        clickDismiss.invoke()
+                    },
+                ) {
+                    Text("安装")
                 }
             }
         }, title = {
-            Text(title)
+            Text("安装应用")
         }, text = {
             // text默认不支持复制黏贴 需要用SelectionContainer包裹
             SelectionContainer {
-                Text(content)
+                Text(filePath)
             }
         })
     }
-
 
     /**
      * 连接设备widget
@@ -135,7 +170,7 @@ data class QuickScreen(val device: String) : Screen {
             p.inputStream.source().buffer().use {
                 while (true) {
                     val line = it.readUtf8Line() ?: return@use
-                println("======================$line")
+                    println("======================$line")
                     val packageName = line.split("=").lastOrNull()
                     if (packageName.isNullOrBlank()) {
                         continue
