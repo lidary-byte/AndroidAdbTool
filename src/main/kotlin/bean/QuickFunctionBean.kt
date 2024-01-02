@@ -11,9 +11,10 @@ import kotlin.random.nextInt
 data class QuickBean(
     val title: String,
     val icon: Int,
-    val command: MutableList<String> = mutableListOf(),
+    val commandList: MutableList<String> = mutableListOf(),
+    val command: String = "",
     var refresh: Boolean = false,
-    val type : Int = ADB_TYPE_OTHER,
+    val type: Int = ADB_TYPE_OTHER,
     val iconColor: Color = randomColor[Random.nextInt(
         IntRange(
             0, randomColor.size - 1

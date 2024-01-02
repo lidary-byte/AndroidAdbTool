@@ -37,14 +37,14 @@ class QuickScreenViewModel : ViewModel() {
     private fun buildData() {
         viewModelScope.launch(Dispatchers.IO) {
             _quickData.value = mutableListOf(
-                QuickBean("安装应用", 0xe693, type = QuickBean.ADB_TYPE_INSTALL, command = mutableListOf("安装应用")),
+                QuickBean("安装应用", 0xe693, type = QuickBean.ADB_TYPE_INSTALL, commandList = mutableListOf("安装应用")),
                 QuickBean("输入文本", 0xe816),
                 QuickBean("截图保存电脑", 0xe931),
                 QuickBean(
                     "查看当前Activity",
                     0xe607,
                     type = QuickBean.ADB_TYPE_SHOW_DIALOG,
-                    command = mutableListOf("shell", "dumpsys", "window", "|", "grep", " mCurrentFocus")
+                    command = "dumpsys activity activities | grep mResumedActivity"
                 ),
                 QuickBean("卸载应用", 0xe740),
                 QuickBean("启动应用", 0xe6af),

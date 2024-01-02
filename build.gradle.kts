@@ -11,6 +11,7 @@ version = "1.0"
 repositories {
     google()
     mavenCentral()
+    maven("https://jitpack.io")
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
@@ -26,6 +27,8 @@ dependencies {
 
     implementation("moe.tlaster:precompose:1.5.10")
     implementation("moe.tlaster:precompose-viewmodel:1.5.10")
+
+    implementation("com.github.vidstige:jadb:v1.2.1")
 }
 
 

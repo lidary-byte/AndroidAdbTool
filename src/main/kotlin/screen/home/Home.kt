@@ -25,29 +25,28 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
-import bean.DeviceInfo
 import bean.HomeTab
 import bean.createHomeTab
+import moe.tlaster.precompose.flow.collectAsStateWithLifecycle
 import moe.tlaster.precompose.navigation.NavHost
 import moe.tlaster.precompose.navigation.Navigator
 import moe.tlaster.precompose.navigation.rememberNavigator
 import moe.tlaster.precompose.navigation.transition.NavTransition
-import okio.buffer
-import okio.source
+import moe.tlaster.precompose.viewmodel.viewModel
 import screen.file_manager.FileMangerScreen
 import screen.logcat.LogcatScreen
 import screen.quick.QuickScreen
 import screen.setting.SettingScreen
-import tool.AdbTool
+import se.vidstige.jadb.JadbDevice
 import tool.deviceId
-import tool.runExec
 
 
 @Composable
 fun Home() {
-    val adbPath = AdbTool.adbPath()
+    val viewModel = viewModel { HomeViewModel() }
+
     // 当前选中的设备id
-    var device by remember { mutableStateOf("") }
+    var device by remember { mutableStateOf<JadbDevice?>(null) }
 
     val navigator = rememberNavigator()
 
@@ -56,10 +55,9 @@ fun Home() {
             modifier = Modifier.width(200.dp),
             header = {
                 Spacer(modifier = Modifier.height(12.dp))
-                ConnectDevices {
-                    if (!it.isNullOrEmpty() && it != device) {
+                ConnectDevices(viewModel) {
+                    if (it != null && it.serial != device?.serial) {
                         device = it
-                        deviceId = device
                     }
                 }
             }) {
@@ -77,7 +75,7 @@ fun Home() {
             scene(
                 route = ROUTER_QUICK_SCREEN,
             ) {
-                QuickScreen(deviceId)
+                QuickScreen(device)
             }
             scene(
                 route = ROUTER_FILE_MANAGER_SCREEN,
@@ -132,32 +130,9 @@ private fun TabNavigationItem(tab: HomeTab, navigator: Navigator) {
  * 连接设备widget
  */
 @Composable
-fun ConnectDevices(deviceCallback: (String?) -> Unit) {
+fun ConnectDevices(viewModel: HomeViewModel, deviceCallback: (JadbDevice?) -> Unit) {
     // 拿到已经连接的所有设备
-    val devices = remember { mutableStateListOf<DeviceInfo>() }
-    var refresh by remember { mutableStateOf(0) }
-    LaunchedEffect(refresh) {
-        val p = Runtime.getRuntime().exec("adb devices")
-        p.inputStream.source().buffer().use {
-            while (true) {
-                val line = it.readUtf8Line() ?: return@use
-                if (line.contains("List of devices attached") || line.isBlank()) {
-                    continue
-                }
-                if (line.contains("device")) {
-                    val deviceLine = line.split("\t")
-                    if (deviceLine.isEmpty()) {
-                        continue
-                    }
-                    val device = deviceLine[0]
-                    val deviceName = "adb -s $device shell getprop ro.product.brand".runExec()
-                    val deviceModel = "adb -s $device shell getprop ro.product.model".runExec()
-                    devices.add(DeviceInfo(deviceName, deviceModel, device))
-                }
-            }
-        }
-    }
-
+    val devices by viewModel.devices.collectAsStateWithLifecycle()
 
     var showDeviceItem by remember { mutableStateOf(false) }
 
@@ -169,18 +144,13 @@ fun ConnectDevices(deviceCallback: (String?) -> Unit) {
 
     var selectIndexDevice by remember { mutableStateOf(0) }
 
+    val connectDeviceName by viewModel.collectDeviceName.collectAsStateWithLifecycle()
 
 
     Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-        val deviceName = if (devices.isNotEmpty()) {
-            val firstDevice = devices[selectIndexDevice]
-            // 获取设备品牌
-            deviceCallback.invoke(firstDevice.device)
-            "${firstDevice.deviceName}  ${firstDevice.deviceModel}"
-        } else {
-            deviceCallback.invoke(null)
-            "连接设备"
-        }
+        // 当前连接的设备
+        deviceCallback.invoke(devices.firstOrNull())
+
         TextButton(
             {
                 showDeviceItem = !showDeviceItem
@@ -189,7 +159,7 @@ fun ConnectDevices(deviceCallback: (String?) -> Unit) {
             shape = RoundedCornerShape(19.dp),
             border = BorderStroke(1.dp, Color.Black)
         ) {
-            Text(deviceName, color = Color.Black)
+            Text(connectDeviceName.deviceName, color = Color.Black)
             Icon(
                 Icons.Default.ArrowDropDown,
                 contentDescription = "",
@@ -207,18 +177,19 @@ fun ConnectDevices(deviceCallback: (String?) -> Unit) {
                         modifier = Modifier.fillMaxWidth().clickable {
                             selectIndexDevice = it
                             showDeviceItem = false
-                            deviceCallback.invoke(device.device)
+                            deviceCallback.invoke(device)
+                            viewModel.devicesName(device)
                         }.padding(vertical = 6.dp, horizontal = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            "${device.deviceName}  ${device.deviceModel}",
-                            color = if (deviceName.contains(device.deviceName) || deviceName.contains(device.deviceModel)) Color(
+                            connectDeviceName.deviceName,
+                            color = if (connectDeviceName.device == device.serial && connectDeviceName.device.isNotBlank()) Color(
                                 139, 195, 74
                             ) else Color.Black
                         )
-                        if (deviceName.contains(device.deviceName) || deviceName.contains(device.deviceModel)) {
+                        if (connectDeviceName.device == device.serial && connectDeviceName.device.isNotBlank()) {
                             Icon(Icons.Default.Check, contentDescription = "", tint = Color(139, 195, 74))
                         }
                     }
@@ -228,8 +199,7 @@ fun ConnectDevices(deviceCallback: (String?) -> Unit) {
 
 
         Button(onClick = {
-            devices.clear()
-            refresh++
+            viewModel.devicesList()
         }, modifier = Modifier.fillMaxWidth()) {
             Text("刷新Device")
         }
