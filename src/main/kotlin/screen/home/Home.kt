@@ -1,11 +1,14 @@
 package screen.home
 
+import ROUTER_FILE_MANAGER_SCREEN
+import ROUTER_LOGCAT_SCREEN
+import ROUTER_QUICK_SCREEN
+import ROUTER_SETTING_SCREEN
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,85 +23,108 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import bean.DeviceInfo
-import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
-import cafe.adriel.voyager.navigator.tab.*
+import bean.HomeTab
+import bean.createHomeTab
+import moe.tlaster.precompose.navigation.NavHost
+import moe.tlaster.precompose.navigation.Navigator
+import moe.tlaster.precompose.navigation.rememberNavigator
+import moe.tlaster.precompose.navigation.transition.NavTransition
 import okio.buffer
 import okio.source
-import res.defaultBgColor
+import screen.file_manager.FileMangerScreen
+import screen.logcat.LogcatScreen
+import screen.quick.QuickScreen
+import screen.setting.SettingScreen
 import tool.AdbTool
 import tool.deviceId
 import tool.runExec
 
 
-@OptIn(ExperimentalVoyagerApi::class)
 @Composable
 fun Home() {
     val adbPath = AdbTool.adbPath()
     // 当前选中的设备id
     var device by remember { mutableStateOf("") }
 
+    val navigator = rememberNavigator()
 
-
-    TabNavigator(QuickTab(device), tabDisposable = {
-        TabDisposable(
-            navigator = it,
-            tabs = listOf(QuickTab(device), FileManagerTab, LogcatTab, SettingTab)
-        )
-    }) {
-        Scaffold(
-            content = {
-                Box(
-                    modifier = Modifier.background(defaultBgColor).fillMaxSize().padding(start = 200.dp)
-                ) {
-                    CurrentTab()
+    Row {
+        NavigationRail(
+            modifier = Modifier.width(200.dp),
+            header = {
+                Spacer(modifier = Modifier.height(12.dp))
+                ConnectDevices {
+                    if (!it.isNullOrEmpty() && it != device) {
+                        device = it
+                        deviceId = device
+                    }
                 }
-            },
-            bottomBar = {
-                NavigationRail(
-                    modifier = Modifier.width(200.dp),
-                    header = {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        ConnectDevices {
-                            if (!it.isNullOrEmpty() && it != device) {
-                                device = it
-                                deviceId = device
-                            }
-                        }
-                    }) {
-                    TabNavigationItem(QuickTab(device))
-                    TabNavigationItem(FileManagerTab)
-                    TabNavigationItem(LogcatTab)
-                    TabNavigationItem(SettingTab)
-                }
+            }) {
+            createHomeTab().map {
+                TabNavigationItem(it, navigator)
             }
+        }
 
-        )
+        NavHost(
+            navigator = navigator,
+            navTransition = NavTransition(),
+            modifier = Modifier.fillMaxSize(),
+            initialRoute = ROUTER_QUICK_SCREEN
+        ) {
+            scene(
+                route = ROUTER_QUICK_SCREEN,
+            ) {
+                QuickScreen(deviceId)
+            }
+            scene(
+                route = ROUTER_FILE_MANAGER_SCREEN,
+            ) {
+                FileMangerScreen("")
+            }
+            scene(
+                route = ROUTER_LOGCAT_SCREEN,
+            ) {
+                LogcatScreen("")
+            }
+            scene(
+                route = ROUTER_SETTING_SCREEN,
+            ) {
+                SettingScreen("")
+            }
+        }
     }
-
 }
 
+
 @Composable
-private fun TabNavigationItem(tab: Tab) {
-    val tabNavigator = LocalTabNavigator.current
-    val color = if (tabNavigator.current.key == tab.key) Color(
+private fun TabNavigationItem(tab: HomeTab, navigator: Navigator) {
+    val currentEntry by navigator.currentEntry.collectAsState(null)
+
+    val color = if (currentEntry?.path == tab.router) Color(
         139, 195, 74
     ) else Color.Gray
     Row(
         modifier = Modifier.fillMaxWidth().clickable {
-            tabNavigator.current = tab
+            if (currentEntry?.path == tab.router) {
+                return@clickable
+            }
+            navigator.navigate(tab.router)
         }.padding(12.dp), verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            tab.options.icon!!, tab.options.title, modifier = Modifier.width(24.dp).height(24.dp),
+            rememberVectorPainter(tab.icon), tab.name, modifier = Modifier.width(24.dp).height(24.dp),
             colorFilter = ColorFilter.tint(color = color)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
-            tab.options.title, color = color
+            tab.name,
+            color = color
         )
     }
+
 }
 
 

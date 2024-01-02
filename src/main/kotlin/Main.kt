@@ -5,23 +5,27 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import moe.tlaster.precompose.PreComposeApp
 import screen.home.Home
 import javax.swing.UIManager
+
 
 fun main() {
     /// 让swing的ui看着像原生的
     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
     application {
-        Window(
-            onCloseRequest = ::exitApplication,
-            title = "tool.AdbTool",
-            visible = true,
-            state = WindowState(size = DpSize(width = 1200.dp, height = 900.dp))
-        ) {
-
-            MaterialTheme {
-                Home()
+        PreComposeApp {
+            Window(
+                onCloseRequest = ::exitApplication,
+                title = "tool.AdbTool",
+                visible = true,
+                state = WindowState(size = DpSize(width = 1200.dp, height = 900.dp))
+            ) {
+                MaterialTheme {
+                    Home()
+                }
             }
         }
+
     }
 }

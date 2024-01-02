@@ -1,15 +1,15 @@
 package screen.quick
 
 import bean.QuickBean
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import moe.tlaster.precompose.viewmodel.ViewModel
+import moe.tlaster.precompose.viewmodel.viewModelScope
 import tool.runExecAndAdb
 
-class QuickScreenModel : ScreenModel {
+class QuickScreenViewModel : ViewModel() {
 
     init {
         buildData()
@@ -25,7 +25,7 @@ class QuickScreenModel : ScreenModel {
         get() = _execResult.asStateFlow()
 
     fun runExec(command: MutableList<String>) {
-        screenModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             _execResult.value = command.runExecAndAdb()
         }
     }
@@ -35,7 +35,7 @@ class QuickScreenModel : ScreenModel {
     }
 
     private fun buildData() {
-        screenModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             _quickData.value = mutableListOf(
                 QuickBean("安装应用", 0xe693, type = QuickBean.ADB_TYPE_INSTALL, command = mutableListOf("安装应用")),
                 QuickBean("输入文本", 0xe816),
