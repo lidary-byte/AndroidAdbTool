@@ -13,13 +13,14 @@ data class QuickBean(
     val icon: Int,
     val commandList: MutableList<String> = mutableListOf(),
     val command: String = "",
-    var refresh: Boolean = false,
     val type: Int = ADB_TYPE_OTHER,
-    val iconColor: Color = randomColor[Random.nextInt(
-        IntRange(
-            0, randomColor.size - 1
-        )
-    )]
+    val iconColor: Color = randomColor[3],
+
+//        [Random.nextInt(
+//        IntRange(
+//            0, randomColor.size - 1
+//        )
+//    )]
 ) {
     companion object {
         const val ADB_TYPE_INSTALL = 0

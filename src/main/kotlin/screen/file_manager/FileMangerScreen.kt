@@ -1,5 +1,6 @@
 package screen.file_manager
 
+import MainState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -22,7 +23,7 @@ import tool.AdbTool
 import tool.runExecAndAdbToBuffer
 
 @Composable
-fun FileMangerScreen(deviceId: String) {
+fun FileMangerScreen(mainState: MainState) {
 
     var foldName by remember { mutableStateOf("/sdcard/") }
     val fileList = remember { mutableStateListOf<FileBean>() }
@@ -30,7 +31,7 @@ fun FileMangerScreen(deviceId: String) {
     // 获取本机文件及文件夹
     LaunchedEffect(foldName) {
         withContext(Dispatchers.IO) {
-            AdbTool.fileList(deviceId, foldName).runExecAndAdbToBuffer().use {
+            AdbTool.fileList(mainState.selectDevice?.serial?:"", foldName).runExecAndAdbToBuffer().use {
                 while (!it.readUtf8Line().isNullOrBlank()) {
                     val line = it.readUtf8Line() ?: continue
                     val hasFold = line.endsWith("/")

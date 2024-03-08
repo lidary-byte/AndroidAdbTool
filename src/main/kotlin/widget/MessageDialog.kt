@@ -11,17 +11,17 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogWindow
 
 /**
  * @Author : lidary
  * @CreateData : 2023/11/7
  * @Description:
  */
-@OptIn(ExperimentalMaterialApi::class)
+
 @Composable
 fun MessageDialog(title: String, content: String, clickDismiss: () -> Unit) {
-    Dialog(onCloseRequest = clickDismiss, title = title) {
+    DialogWindow(onCloseRequest = clickDismiss, title = title) {
         // text默认不支持复制黏贴 需要用SelectionContainer包裹
         SelectionContainer(
             modifier = Modifier.fillMaxHeight(1f).fillMaxWidth().padding(16.dp).verticalScroll(rememberScrollState())

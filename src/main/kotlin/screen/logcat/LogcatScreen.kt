@@ -1,5 +1,6 @@
 package screen.logcat
 
+import MainState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -33,7 +34,7 @@ import tool.runExecAndAdbToBuffer
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun LogcatScreen(deviceId: String) {
+fun LogcatScreen(mainState: MainState) {
     var filter by remember { mutableStateOf("*:A") }
     val logList = remember { mutableStateListOf("") }
     val (isPopupVisible, setIsPopupVisible) = remember { mutableStateOf(false) }
@@ -43,7 +44,7 @@ fun LogcatScreen(deviceId: String) {
 
     LaunchedEffect(filter) {
         withContext(Dispatchers.IO) {
-            AdbTool.log(deviceId, filter).runExecAndAdbToBuffer().use {
+            AdbTool.log(mainState.selectDevice?.serial?:"", filter).runExecAndAdbToBuffer().use {
                 while (true) {
                     val line = it.readUtf8Line() ?: continue
                     withContext(Dispatchers.Main) {
